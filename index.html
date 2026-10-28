@@ -114,15 +114,68 @@
     .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin-bottom: 27px; }
     .page-heading h1 { margin: 0 0 5px; font-size: 27px; letter-spacing: -.9px; }
     .page-heading p { margin: 0; color: var(--muted); font-size: 13px; }
-    #view-dashboard .page-heading > div:first-child::before {
-      display: block;
-      margin-bottom: 5px;
-      color: #7548f5;
-      content: "PAINEL DE CONTROLE";
-      font-size: 10px;
-      font-weight: 750;
-      letter-spacing: 1.3px;
+    .dashboard-hero {
+      position: relative;
+      display: flex;
+      min-height: 235px;
+      align-items: center;
+      justify-content: space-between;
+      overflow: hidden;
+      margin-bottom: 21px;
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 22px;
+      background:
+        radial-gradient(ellipse at 82% 0%, rgba(255,130,220,.49), transparent 25rem),
+        radial-gradient(ellipse at 54% 115%, rgba(69,91,255,.75), transparent 28rem),
+        linear-gradient(115deg, #4324a5 0%, #7238d6 51%, #ab3dbb 100%);
+      padding: 29px 35px;
+      box-shadow: 0 16px 38px rgba(90, 43, 173, .22);
+      color: white;
     }
+    .dashboard-hero::before, .dashboard-hero::after {
+      position: absolute;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 50%;
+      content: "";
+      pointer-events: none;
+    }
+    .dashboard-hero::before { top: -118px; right: 118px; width: 350px; height: 350px; }
+    .dashboard-hero::after { top: -75px; right: 161px; width: 265px; height: 265px; }
+    .hero-copy { position: relative; z-index: 1; max-width: 555px; }
+    .hero-eyebrow { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; color: #eadfff; font-size: 10px; font-weight: 750; letter-spacing: 1.55px; text-transform: uppercase; }
+    .hero-eyebrow::before { width: 7px; height: 7px; border-radius: 50%; background: #64f2c0; box-shadow: 0 0 12px rgba(100,242,192,.8); content: ""; }
+    .hero-copy h1 { max-width: 490px; margin: 0; font-size: clamp(29px, 3.2vw, 40px); font-weight: 760; letter-spacing: -1.7px; line-height: 1.08; }
+    .hero-copy p { max-width: 420px; margin: 11px 0 0; color: #e4dafa; font-size: 13px; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 21px; }
+    .hero-actions .button-primary { border-color: rgba(255,255,255,.86); background: white; color: #6336c8; box-shadow: 0 5px 15px rgba(42,19,110,.18); }
+    .hero-actions .button-primary:hover { background: #f7f1ff; }
+    .hero-actions .button-secondary { border-color: rgba(255,255,255,.3); background: rgba(255,255,255,.1); color: white; box-shadow: none; backdrop-filter: blur(8px); }
+    .hero-actions .button-secondary:hover { border-color: rgba(255,255,255,.65); background: rgba(255,255,255,.19); color: white; }
+    .hero-art { position: absolute; top: 50%; right: 28px; width: 250px; height: 210px; transform: translateY(-50%); }
+    .hero-orbit { position: absolute; top: 5px; right: 2px; width: 205px; height: 205px; border: 1px solid rgba(255,255,255,.2); border-radius: 50%; }
+    .hero-orbit::before, .hero-orbit::after { position: absolute; border: 1px solid rgba(255,255,255,.13); border-radius: 50%; content: ""; }
+    .hero-orbit::before { inset: 17px; }
+    .hero-orbit::after { inset: 35px; }
+    .hero-device {
+      position: absolute;
+      top: 48px;
+      right: 30px;
+      display: grid;
+      width: 151px;
+      height: 111px;
+      place-items: center;
+      border: 1px solid rgba(255,255,255,.65);
+      border-radius: 22px;
+      background: linear-gradient(145deg, rgba(255,255,255,.3), rgba(255,255,255,.1));
+      box-shadow: 0 16px 34px rgba(31,13,87,.24), inset 0 1px rgba(255,255,255,.5);
+      transform: rotate(8deg);
+      backdrop-filter: blur(9px);
+    }
+    .hero-device svg { width: 72px; height: 72px; filter: drop-shadow(0 5px 8px rgba(35,12,83,.2)); }
+    .hero-float { position: absolute; z-index: 1; display: grid; width: 37px; height: 37px; place-items: center; border: 1px solid rgba(255,255,255,.43); border-radius: 12px; background: rgba(255,255,255,.2); box-shadow: 0 8px 18px rgba(42,19,110,.15); color: white; font-size: 18px; backdrop-filter: blur(8px); }
+    .hero-float-one { top: 28px; right: 174px; transform: rotate(-12deg); }
+    .hero-float-two { right: 6px; bottom: 30px; background: rgba(255,190,103,.26); transform: rotate(11deg); }
+    .hero-float-three { bottom: 24px; left: 18px; background: rgba(94,235,194,.21); transform: rotate(-8deg); }
     .button {
       display: inline-flex;
       min-height: 41px;
@@ -141,21 +194,25 @@
     .button-secondary:hover { border-color: #d0cffa; background: #faf9ff; color: var(--brand); }
     .button-danger { border-color: #f2d4d4; background: white; color: var(--red); }
     .button-small { min-height: 31px; padding: 0 10px; font-size: 12px; }
-    .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 23px; }
+    .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 15px; margin-bottom: 23px; }
     .stat-card, .panel { border: 1px solid rgba(229,232,241,.95); border-radius: 15px; background: rgba(255,255,255,.96); box-shadow: var(--shadow); }
-    .stat-card { position: relative; min-height: 125px; overflow: hidden; padding: 18px 19px; transition: transform .18s ease, box-shadow .18s ease; }
-    .stat-card::after { position: absolute; right: -25px; bottom: -42px; width: 105px; height: 105px; border-radius: 50%; background: #e8ddff; content: ""; opacity: .72; }
-    .stat-card:nth-child(2)::after { background: #d6fff0; }
-    .stat-card:nth-child(3)::after { background: #ffe8bf; }
-    .stat-card:nth-child(4)::after { background: #ffdfec; }
+    .stat-card { position: relative; min-height: 134px; overflow: hidden; padding: 17px 18px; transition: transform .18s ease, box-shadow .18s ease; }
+    .stat-card::before { position: absolute; inset: 0 0 auto; height: 4px; background: linear-gradient(90deg, #a044ff, #7548f5); content: ""; }
+    .stat-card:nth-child(2)::before { background: linear-gradient(90deg, #00c98b, #5be3a7); }
+    .stat-card:nth-child(3)::before { background: linear-gradient(90deg, #ffae38, #ff6c5e); }
+    .stat-card:nth-child(4)::before { background: linear-gradient(90deg, #ff5593, #bd54ef); }
+    .stat-card::after { position: absolute; right: -24px; bottom: -53px; width: 122px; height: 122px; border-radius: 50%; background: #f1e9ff; content: ""; opacity: .85; }
+    .stat-card:nth-child(2)::after { background: #dcfff1; }
+    .stat-card:nth-child(3)::after { background: #fff0d6; }
+    .stat-card:nth-child(4)::after { background: #ffe7f1; }
     .stat-card:hover { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(30,42,75,.09); }
     .stat-top { display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 12px; font-weight: 550; }
-    .stat-icon { position: relative; z-index: 1; display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid rgba(117,72,245,.13); border-radius: 11px; background: #eee6ff; color: #7548f5; font-size: 16px; }
+    .stat-icon { position: relative; z-index: 1; display: grid; width: 37px; height: 37px; place-items: center; border: 1px solid rgba(117,72,245,.13); border-radius: 12px; background: #eee6ff; color: #7548f5; font-size: 17px; }
     .stat-card:nth-child(2) .stat-icon { background: #d9ffef; color: #00895d; }
     .stat-card:nth-child(3) .stat-icon { background: #fff0d3; color: #b65b00; }
     .stat-card:nth-child(4) .stat-icon { background: #ffe4ed; color: #d53961; }
-    .stat-value { position: relative; z-index: 1; margin-top: 10px; font-size: 29px; font-weight: 760; letter-spacing: -1px; line-height: 1; }
-    .stat-caption { position: relative; z-index: 1; margin-top: 6px; color: #939daf; font-size: 11px; }
+    .stat-value { position: relative; z-index: 1; margin-top: 9px; font-size: 31px; font-weight: 760; letter-spacing: -1px; line-height: 1; }
+    .stat-caption { position: relative; z-index: 1; margin-top: 6px; color: #808ba5; font-size: 11px; }
     .panel { overflow: hidden; }
     .panel-header { display: flex; align-items: center; justify-content: space-between; gap: 14px; border-bottom: 1px solid #eef0f5; padding: 18px 20px; }
     .panel-title { margin: 0; font-size: 14px; font-weight: 720; letter-spacing: -.1px; }
@@ -238,6 +295,8 @@
       .content { padding: 27px 25px 45px; }
       .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .dashboard-grid { grid-template-columns: 1fr; }
+      .hero-art { right: 2px; transform: translateY(-50%) scale(.85); transform-origin: right center; }
+      .hero-copy { max-width: 63%; }
     }
     @media (max-width: 700px) {
       .sidebar { width: 248px; transform: translateX(-100%); transition: transform .2s ease; box-shadow: 12px 0 30px rgba(20,29,53,.2); }
@@ -250,6 +309,13 @@
       .content { padding: 27px 16px 38px; }
       .page-heading { align-items: flex-start; }
       .page-heading h1 { font-size: 23px; }
+      .dashboard-hero { min-height: 285px; align-items: flex-start; border-radius: 18px; padding: 24px 21px; }
+      .hero-copy { max-width: 100%; }
+      .hero-copy h1 { max-width: 330px; font-size: 31px; }
+      .hero-copy p { max-width: 290px; font-size: 12px; }
+      .hero-actions { position: relative; z-index: 2; gap: 7px; margin-top: 17px; }
+      .hero-actions .button { min-height: 36px; }
+      .hero-art { top: auto; right: -18px; bottom: -71px; transform: scale(.64); transform-origin: right bottom; }
       .page-heading .button { min-height: 36px; padding: 0 10px; font-size: 11px; }
       .stats { gap: 10px; }
       .stat-card { min-height: 108px; padding: 14px; }
@@ -269,6 +335,9 @@
       .stat-icon { width: 27px; height: 27px; }
       .page-heading { gap: 8px; }
       .page-heading .button { gap: 5px; }
+      .dashboard-hero { min-height: 305px; }
+      .hero-copy h1 { font-size: 28px; }
+      .hero-art { right: -33px; transform: scale(.55); }
     }
   </style>
 </head>
@@ -300,9 +369,31 @@
 
       <div class="content">
         <section class="view active" id="view-dashboard">
-          <div class="page-heading">
-            <div><h1>Visão geral</h1><p>Acompanhe seus equipamentos e movimentações.</p></div>
-            <button class="button button-primary" data-action="new-loan"><span>＋</span> Registrar empréstimo</button>
+          <div class="dashboard-hero">
+            <div class="hero-copy">
+              <div class="hero-eyebrow">Tudo organizado, do seu jeito</div>
+              <h1>Seu acervo em movimento.</h1>
+              <p>Consulte equipamentos, acompanhe empréstimos e mantenha cada devolução em dia.</p>
+              <div class="hero-actions">
+                <button class="button button-primary" data-action="new-loan"><span>＋</span> Novo empréstimo</button>
+                <button class="button button-secondary" data-action="new-equipment"><span>▣</span> Cadastrar item</button>
+              </div>
+            </div>
+            <div class="hero-art" aria-hidden="true">
+              <div class="hero-orbit"></div>
+              <div class="hero-device">
+                <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M17 28.5 40 16l23 12.5v25L40 66 17 53.5v-25Z" fill="url(#box)"/>
+                  <path d="m17.5 28.7 22.4 12.5L62.5 29M39.9 41.2V65" stroke="#fff" stroke-width="2.7" stroke-linejoin="round"/>
+                  <path d="m29 22.3 22.8 12.8v10.2" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/>
+                  <path d="m31 35.5 5.2 2.9v5.5L31 41v-5.5Z" fill="#fff" fill-opacity=".72"/>
+                  <defs><linearGradient id="box" x1="20" y1="18" x2="61" y2="65" gradientUnits="userSpaceOnUse"><stop stop-color="#FFB2F1"/><stop offset="1" stop-color="#F477D4"/></linearGradient></defs>
+                </svg>
+              </div>
+              <div class="hero-float hero-float-one">✓</div>
+              <div class="hero-float hero-float-two">✦</div>
+              <div class="hero-float hero-float-three">↗</div>
+            </div>
           </div>
           <div class="stats">
             <article class="stat-card"><div class="stat-top"><span>Total de equipamentos</span><span class="stat-icon">▣</span></div><div class="stat-value" id="stat-total">0</div><div class="stat-caption">itens cadastrados</div></article>
@@ -320,10 +411,6 @@
               <div class="panel-header"><div><h2 class="panel-title">Atividade recente</h2><p class="panel-subtitle">Últimas movimentações do acervo.</p></div></div>
               <div class="panel-body"><div class="activity-list" id="activityList"></div><div class="empty-state" id="activityEmpty"><div class="empty-icon">◷</div><strong>Sem movimentações ainda</strong><p>Cadastre um equipamento para começar.</p></div></div>
             </section>
-          </div>
-          <div class="quick-links">
-            <button class="button button-secondary" data-action="new-equipment">＋ Cadastrar equipamento</button>
-            <button class="button button-secondary" data-view-link="equipments">Consultar equipamentos</button>
           </div>
         </section>
 
