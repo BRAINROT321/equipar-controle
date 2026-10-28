@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f7fb">
+  <title>Equipar — Controle de equipamentos</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17213a;
+      --muted: #73809a;
+      --line: #e7eaf2;
+      --surface: #ffffff;
+      --canvas: #f4f6fb;
+      --brand: #635bdb;
+      --brand-dark: #5148c7;
+      --brand-soft: #efedff;
+      --green: #16835d;
+      --green-soft: #e6f6ef;
+      --amber: #a76b0b;
+      --amber-soft: #fff3dc;
+      --red: #bd4b4b;
+      --red-soft: #fdecec;
+      --shadow: 0 10px 30px rgba(30, 42, 75, .055);
+      --sidebar: #171d35;
+      --sidebar-muted: #a4acc4;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(ellipse at 92% 4%, rgba(114, 105, 228, .065), transparent 28rem),
+        var(--canvas);
+      color: var(--ink);
+      font: 14px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    .app { display: flex; min-height: 100vh; }
+    .sidebar {
+      position: fixed;
+      inset: 0 auto 0 0;
+      z-index: 3;
+      display: flex;
+      width: 248px;
+      flex-direction: column;
+      border-right: 1px solid rgba(255,255,255,.07);
+      background:
+        radial-gradient(ellipse at 0% 0%, rgba(112, 99, 231, .2), transparent 19rem),
+        var(--sidebar);
+      padding: 27px 17px 18px;
+    }
+    .brand { display: flex; align-items: center; gap: 11px; padding: 0 10px 31px; }
+    .brand-mark {
+      display: grid;
+      width: 35px;
+      height: 35px;
+      place-items: center;
+      border: 1px solid rgba(255,255,255,.22);
+      border-radius: 12px;
+      background: linear-gradient(145deg, #8b80ff, #5f56dc 72%);
+      color: white;
+      font-size: 19px;
+      font-weight: 800;
+      box-shadow: 0 5px 16px rgba(91, 77, 222, .35);
+    }
+    .brand-name { font-size: 19px; font-weight: 750; letter-spacing: -.7px; }
+    .brand-name { color: #f4f3ff; }
+    .brand-name span { color: #a8a0ff; }
+    .nav-label { padding: 0 11px 10px; color: #858da9; font-size: 10px; font-weight: 750; letter-spacing: 1.15px; }
+    .nav { display: grid; gap: 6px; }
+    .nav-button {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 45px;
+      border: 0;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--sidebar-muted);
+      padding: 0 12px;
+      text-align: left;
+      transition: background .15s, color .15s;
+    }
+    .nav-button:hover { background: rgba(255,255,255,.07); color: #fff; }
+    .nav-button.active { background: linear-gradient(90deg, rgba(125, 113, 255, .25), rgba(125, 113, 255, .1)); color: #d3ceff; font-weight: 650; box-shadow: inset 3px 0 #9c92ff; }
+    .nav-icon { width: 19px; text-align: center; font-size: 17px; }
+    .sidebar-bottom { margin-top: auto; border-top: 1px solid rgba(255,255,255,.09); padding: 17px 10px 0; color: #939bb5; font-size: 12px; }
+    .storage-indicator { display: flex; align-items: center; gap: 8px; padding-top: 12px; }
+    .storage-dot { width: 8px; height: 8px; border-radius: 50%; background: #4bd29b; box-shadow: 0 0 0 3px rgba(75,210,155,.12); }
+    .main { width: calc(100% - 248px); margin-left: 248px; }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      display: flex;
+      height: 70px;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(224,228,239,.8);
+      background: rgba(255,255,255,.86);
+      padding: 0 38px;
+      box-shadow: 0 4px 18px rgba(35,45,75,.025);
+      backdrop-filter: blur(16px);
+    }
+    .breadcrumb { color: var(--muted); font-size: 13px; }
+    .breadcrumb strong { color: var(--ink); font-weight: 650; }
+    .today { color: #77819a; font-size: 12px; font-weight: 550; text-transform: capitalize; }
+    .content { width: min(1260px, 100%); margin: 0 auto; padding: 38px 38px 58px; }
+    .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin-bottom: 27px; }
+    .page-heading h1 { margin: 0 0 5px; font-size: 27px; letter-spacing: -.9px; }
+    .page-heading p { margin: 0; color: var(--muted); font-size: 13px; }
+    #view-dashboard .page-heading > div:first-child::before {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--brand);
+      content: "PAINEL DE CONTROLE";
+      font-size: 10px;
+      font-weight: 750;
+      letter-spacing: 1.3px;
+    }
+    .button {
+      display: inline-flex;
+      min-height: 41px;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      padding: 0 14px;
+      font-weight: 650;
+      transition: .15s ease;
+    }
+    .button-primary { background: linear-gradient(135deg, #7168e6, #5951d2); color: white; box-shadow: 0 5px 13px rgba(87,85,217,.22); }
+    .button-primary:hover { background: linear-gradient(135deg, #665ddd, #4d44c3); transform: translateY(-1px); box-shadow: 0 7px 17px rgba(87,85,217,.27); }
+    .button-secondary { border-color: #e3e7f0; background: rgba(255,255,255,.9); color: #4c5870; box-shadow: 0 2px 6px rgba(31,43,73,.025); }
+    .button-secondary:hover { border-color: #d0cffa; background: #faf9ff; color: var(--brand); }
+    .button-danger { border-color: #f2d4d4; background: white; color: var(--red); }
+    .button-small { min-height: 31px; padding: 0 10px; font-size: 12px; }
+    .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 23px; }
+    .stat-card, .panel { border: 1px solid rgba(229,232,241,.95); border-radius: 15px; background: rgba(255,255,255,.96); box-shadow: var(--shadow); }
+    .stat-card { position: relative; min-height: 125px; overflow: hidden; padding: 18px 19px; transition: transform .18s ease, box-shadow .18s ease; }
+    .stat-card::after { position: absolute; right: -25px; bottom: -42px; width: 105px; height: 105px; border-radius: 50%; background: var(--brand-soft); content: ""; opacity: .44; }
+    .stat-card:nth-child(2)::after { background: var(--green-soft); }
+    .stat-card:nth-child(3)::after { background: var(--amber-soft); }
+    .stat-card:nth-child(4)::after { background: #edf2ff; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(30,42,75,.09); }
+    .stat-top { display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 12px; font-weight: 550; }
+    .stat-icon { position: relative; z-index: 1; display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid rgba(99,91,219,.07); border-radius: 11px; background: var(--brand-soft); color: var(--brand); font-size: 16px; }
+    .stat-card:nth-child(2) .stat-icon { background: var(--green-soft); color: var(--green); }
+    .stat-card:nth-child(3) .stat-icon { background: var(--amber-soft); color: var(--amber); }
+    .stat-card:nth-child(4) .stat-icon { background: #edf2ff; color: #5974c8; }
+    .stat-value { position: relative; z-index: 1; margin-top: 10px; font-size: 29px; font-weight: 760; letter-spacing: -1px; line-height: 1; }
+    .stat-caption { position: relative; z-index: 1; margin-top: 6px; color: #939daf; font-size: 11px; }
+    .panel { overflow: hidden; }
+    .panel-header { display: flex; align-items: center; justify-content: space-between; gap: 14px; border-bottom: 1px solid #eef0f5; padding: 18px 20px; }
+    .panel-title { margin: 0; font-size: 14px; font-weight: 720; letter-spacing: -.1px; }
+    .panel-subtitle { margin: 3px 0 0; color: var(--muted); font-size: 12px; }
+    .panel-body { padding: 18px 20px; }
+    .dashboard-grid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(250px, .85fr); gap: 18px; }
+    .view { display: none; }
+    .view.active { display: block; }
+    .toolbar { display: flex; align-items: center; gap: 10px; }
+    .search-wrap { position: relative; flex: 1; max-width: 360px; }
+    .search-icon { position: absolute; top: 9px; left: 12px; color: #9aa3b3; }
+    .search-input, .filter-select, .field-input, .field-select, .field-textarea {
+      width: 100%;
+      min-height: 38px;
+      border: 1px solid #e1e5ed;
+      border-radius: 10px;
+      outline: none;
+      background: white;
+      color: var(--ink);
+      padding: 0 11px;
+    }
+    .search-input { padding-left: 35px; }
+    .search-input:focus, .filter-select:focus, .field-input:focus, .field-select:focus, .field-textarea:focus { border-color: #8c8ae8; box-shadow: 0 0 0 3px rgba(87,85,217,.1); }
+    .filter-select { width: auto; min-width: 145px; color: #566178; }
+    .table-wrap { width: 100%; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th { padding: 12px 17px; background: #fafbfe; color: #8993a8; font-size: 10px; font-weight: 730; letter-spacing: .65px; text-transform: uppercase; white-space: nowrap; }
+    td { padding: 14px 17px; border-top: 1px solid #f0f2f7; color: #47536a; font-size: 12px; vertical-align: middle; }
+    tbody tr { transition: background .12s ease; }
+    tbody tr:hover { background: #fafaff; }
+    .item-name { color: var(--ink); font-size: 12px; font-weight: 680; }
+    .item-meta { margin-top: 2px; color: #9aa3b3; font-size: 11px; }
+    .tag { display: inline-flex; align-items: center; gap: 5px; border: 1px solid rgba(0,0,0,.025); border-radius: 20px; padding: 4px 9px; font-size: 10px; font-weight: 680; white-space: nowrap; }
+    .tag-available, .tag-returned, .tag-good { background: var(--green-soft); color: var(--green); }
+    .tag-loaned, .tag-attention { background: var(--amber-soft); color: var(--amber); }
+    .tag-maintenance, .tag-damaged { background: var(--red-soft); color: var(--red); }
+    .tag-overdue { background: #fdecec; color: #b53636; }
+    .row-actions { display: flex; gap: 6px; white-space: nowrap; }
+    .text-button { border: 0; background: transparent; color: var(--brand); padding: 4px; font-size: 11px; font-weight: 650; }
+    .text-button:hover { text-decoration: underline; }
+    .empty-state { padding: 39px 20px; color: var(--muted); text-align: center; }
+    .empty-icon { display: grid; width: 43px; height: 43px; margin: 0 auto 10px; place-items: center; border-radius: 14px; background: #f3f2ff; color: #8178e3; font-size: 22px; }
+    .empty-state strong { display: block; margin-bottom: 4px; color: #4e5a70; font-size: 13px; }
+    .empty-state p { margin: 0; font-size: 12px; }
+    .activity-list { display: grid; }
+    .activity-item { display: flex; align-items: flex-start; gap: 11px; padding: 12px 0; }
+    .activity-item + .activity-item { border-top: 1px solid #f0f2f6; }
+    .activity-mark { display: grid; width: 29px; height: 29px; flex: 0 0 auto; place-items: center; border-radius: 9px; background: var(--brand-soft); color: var(--brand); }
+    .activity-copy { min-width: 0; }
+    .activity-copy strong { display: block; overflow: hidden; color: #354158; font-size: 11px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+    .activity-copy span { display: block; margin-top: 2px; color: #99a2b2; font-size: 10px; }
+    .quick-links { display: flex; gap: 9px; margin-top: 18px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .field { display: grid; align-content: start; gap: 6px; }
+    .field.full { grid-column: 1 / -1; }
+    .field label { color: #4c5870; font-size: 12px; font-weight: 650; }
+    .field label span { color: var(--red); }
+    .field-hint { color: #98a1b1; font-size: 10px; }
+    .field-textarea { min-height: 78px; resize: vertical; padding: 9px 11px; }
+    dialog { width: min(520px, calc(100% - 28px)); max-height: min(90vh, 760px); border: 1px solid rgba(230,232,241,.9); border-radius: 16px; padding: 0; box-shadow: 0 24px 80px rgba(20,29,53,.24); }
+    dialog::backdrop { background: rgba(24,32,51,.42); backdrop-filter: blur(2px); }
+    .modal-header { display: flex; align-items: flex-start; justify-content: space-between; border-bottom: 1px solid var(--line); padding: 19px 22px 15px; }
+    .modal-header h2 { margin: 0; font-size: 17px; letter-spacing: -.3px; }
+    .modal-header p { margin: 3px 0 0; color: var(--muted); font-size: 11px; }
+    .modal-close { border: 0; background: transparent; color: #8d96a8; font-size: 21px; line-height: 1; }
+    .modal-body { padding: 19px 22px; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--line); padding: 13px 22px; }
+    .toast { position: fixed; right: 24px; bottom: 24px; z-index: 10; max-width: min(390px, calc(100vw - 32px)); border: 1px solid #d5eee3; border-radius: 10px; background: white; box-shadow: var(--shadow); padding: 12px 16px; color: var(--green); font-size: 12px; font-weight: 650; opacity: 0; pointer-events: none; transform: translateY(8px); transition: .2s ease; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .mobile-menu { display: none; border: 0; background: none; color: var(--ink); font-size: 20px; }
+    :focus-visible { outline: 3px solid rgba(111,101,224,.35); outline-offset: 2px; }
+    .nav-button:focus-visible { outline-color: rgba(196,190,255,.75); }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+    }
+    @media (max-width: 1050px) {
+      .sidebar { width: 215px; }
+      .main { width: calc(100% - 215px); margin-left: 215px; }
+      .topbar { padding: 0 25px; }
+      .content { padding: 27px 25px 45px; }
+      .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .dashboard-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 700px) {
+      .sidebar { width: 248px; transform: translateX(-100%); transition: transform .2s ease; box-shadow: 12px 0 30px rgba(20,29,53,.2); }
+      .sidebar.open { transform: translateX(0); }
+      .main { width: 100%; margin-left: 0; }
+      .topbar { height: 60px; padding: 0 17px; }
+      .mobile-menu { display: block; }
+      .topbar-left { display: flex; align-items: center; gap: 12px; }
+      .today { display: none; }
+      .content { padding: 27px 16px 38px; }
+      .page-heading { align-items: flex-start; }
+      .page-heading h1 { font-size: 23px; }
+      .page-heading .button { min-height: 36px; padding: 0 10px; font-size: 11px; }
+      .stats { gap: 10px; }
+      .stat-card { min-height: 108px; padding: 14px; }
+      .stat-value { font-size: 24px; }
+      .panel-header { align-items: flex-start; padding: 15px; }
+      .panel-body { padding: 15px; }
+      .toolbar { flex-wrap: wrap; }
+      .search-wrap { max-width: none; flex-basis: 100%; }
+      .filter-select { flex: 1; }
+      .form-grid { grid-template-columns: 1fr; }
+      .field.full { grid-column: auto; }
+      .quick-links { flex-wrap: wrap; }
+    }
+    @media (max-width: 390px) {
+      .stats { grid-template-columns: 1fr 1fr; }
+      .stat-top { font-size: 10px; }
+      .stat-icon { width: 27px; height: 27px; }
+      .page-heading { gap: 8px; }
+      .page-heading .button { gap: 5px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand"><div class="brand-mark">E</div><div class="brand-name">equi<span>par</span></div></div>
+      <div class="nav-label">MENU PRINCIPAL</div>
+      <nav class="nav" aria-label="Menu principal">
+        <button class="nav-button active" data-view="dashboard"><span class="nav-icon">⌂</span>Visão geral</button>
+        <button class="nav-button" data-view="equipments"><span class="nav-icon">▣</span>Equipamentos</button>
+        <button class="nav-button" data-view="loans"><span class="nav-icon">⇄</span>Empréstimos</button>
+        <button class="nav-button" data-view="returns"><span class="nav-icon">↩</span>Devoluções</button>
+      </nav>
+      <div class="sidebar-bottom">
+        Sistema de controle de equipamentos
+        <div class="storage-indicator"><span class="storage-dot"></span>Dados salvos neste dispositivo</div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="mobile-menu" id="mobileMenu" aria-label="Abrir menu">☰</button>
+          <div class="breadcrumb">Equipar <span aria-hidden="true">/</span> <strong id="breadcrumbTitle">Visão geral</strong></div>
+        </div>
+        <div class="today" id="todayLabel"></div>
+      </header>
+
+      <div class="content">
+        <section class="view active" id="view-dashboard">
+          <div class="page-heading">
+            <div><h1>Visão geral</h1><p>Acompanhe seus equipamentos e movimentações.</p></div>
+            <button class="button button-primary" data-action="new-loan"><span>＋</span> Registrar empréstimo</button>
+          </div>
+          <div class="stats">
+            <article class="stat-card"><div class="stat-top"><span>Total de equipamentos</span><span class="stat-icon">▣</span></div><div class="stat-value" id="stat-total">0</div><div class="stat-caption">itens cadastrados</div></article>
+            <article class="stat-card"><div class="stat-top"><span>Disponíveis</span><span class="stat-icon">✓</span></div><div class="stat-value" id="stat-available">0</div><div class="stat-caption">prontos para empréstimo</div></article>
+            <article class="stat-card"><div class="stat-top"><span>Emprestados</span><span class="stat-icon">⇄</span></div><div class="stat-value" id="stat-loaned">0</div><div class="stat-caption">em posse de alguém</div></article>
+            <article class="stat-card"><div class="stat-top"><span>Indisponíveis</span><span class="stat-icon">⚙</span></div><div class="stat-value" id="stat-maintenance">0</div><div class="stat-caption">em manutenção ou danificados</div></article>
+          </div>
+          <div class="dashboard-grid">
+            <section class="panel">
+              <div class="panel-header"><div><h2 class="panel-title">Empréstimos recentes</h2><p class="panel-subtitle">Acompanhe os itens que saíram por último.</p></div><button class="text-button" data-view-link="loans">Ver todos</button></div>
+              <div class="table-wrap"><table><thead><tr><th>Equipamento</th><th>Responsável</th><th>Previsão</th><th>Status</th></tr></thead><tbody id="recentLoans"></tbody></table></div>
+              <div class="empty-state" id="recentEmpty"><div class="empty-icon">⇄</div><strong>Nenhum empréstimo registrado</strong><p>Os empréstimos recentes aparecerão aqui.</p></div>
+            </section>
+            <section class="panel">
+              <div class="panel-header"><div><h2 class="panel-title">Atividade recente</h2><p class="panel-subtitle">Últimas movimentações do acervo.</p></div></div>
+              <div class="panel-body"><div class="activity-list" id="activityList"></div><div class="empty-state" id="activityEmpty"><div class="empty-icon">◷</div><strong>Sem movimentações ainda</strong><p>Cadastre um equipamento para começar.</p></div></div>
+            </section>
+          </div>
+          <div class="quick-links">
+            <button class="button button-secondary" data-action="new-equipment">＋ Cadastrar equipamento</button>
+            <button class="button button-secondary" data-view-link="equipments">Consultar equipamentos</button>
+          </div>
+        </section>
+
+        <section class="view" id="view-equipments">
+          <div class="page-heading">
+            <div><h1>Equipamentos</h1><p>Consulte o acervo, disponibilidade e estado de cada item.</p></div>
+            <button class="button button-primary" data-action="new-equipment"><span>＋</span> Cadastrar equipamento</button>
+          </div>
+          <section class="panel">
+            <div class="panel-header"><div><h2 class="panel-title">Acervo de equipamentos</h2><p class="panel-subtitle" id="equipmentCount">0 equipamentos cadastrados</p></div></div>
+            <div class="panel-body"><div class="toolbar">
+              <div class="search-wrap"><span class="search-icon">⌕</span><input id="equipmentSearch" class="search-input" type="search" placeholder="Buscar por equipamento, código ou categoria" aria-label="Buscar equipamentos"></div>
+              <select id="equipmentFilter" class="filter-select" aria-label="Filtrar por estado">
+                <option value="all">Todos os estados</option><option value="available">Disponível</option><option value="loaned">Emprestado</option><option value="maintenance">Manutenção</option><option value="damaged">Danificado</option>
+              </select>
+            </div></div>
+            <div class="table-wrap"><table><thead><tr><th>Equipamento</th><th>Código</th><th>Categoria</th><th>Estado</th><th>Disponibilidade</th><th>Ações</th></tr></thead><tbody id="equipmentRows"></tbody></table></div>
+            <div class="empty-state" id="equipmentEmpty"><div class="empty-icon">▣</div><strong>Nenhum equipamento encontrado</strong><p>Cadastre equipamentos ou ajuste os filtros da busca.</p></div>
+          </section>
+        </section>
+
+        <section class="view" id="view-loans">
+          <div class="page-heading">
+            <div><h1>Empréstimos</h1><p>Registre saídas e acompanhe quem está com cada equipamento.</p></div>
+            <button class="button button-primary" data-action="new-loan"><span>＋</span> Registrar empréstimo</button>
+          </div>
+          <section class="panel">
+            <div class="panel-header"><div><h2 class="panel-title">Histórico de empréstimos</h2><p class="panel-subtitle">Empréstimos ativos e registros anteriores.</p></div></div>
+            <div class="panel-body"><div class="toolbar">
+              <div class="search-wrap"><span class="search-icon">⌕</span><input id="loanSearch" class="search-input" type="search" placeholder="Buscar por pessoa ou equipamento" aria-label="Buscar empréstimos"></div>
+              <select id="loanFilter" class="filter-select" aria-label="Filtrar empréstimos"><option value="all">Todos</option><option value="active">Em andamento</option><option value="returned">Devolvidos</option></select>
+            </div></div>
+            <div class="table-wrap"><table><thead><tr><th>Equipamento</th><th>Responsável</th><th>Retirada</th><th>Devolução prevista</th><th>Status</th><th>Ações</th></tr></thead><tbody id="loanRows"></tbody></table></div>
+            <div class="empty-state" id="loanEmpty"><div class="empty-icon">⇄</div><strong>Nenhum empréstimo encontrado</strong><p>Quando você registrar um empréstimo, ele aparecerá aqui.</p></div>
+          </section>
+        </section>
+
+        <section class="view" id="view-returns">
+          <div class="page-heading">
+            <div><h1>Devoluções</h1><p>Registre a devolução e atualize o estado do equipamento.</p></div>
+          </div>
+          <section class="panel">
+            <div class="panel-header"><div><h2 class="panel-title">Equipamentos aguardando devolução</h2><p class="panel-subtitle">Confira o estado do item ao recebê-lo de volta.</p></div></div>
+            <div class="table-wrap"><table><thead><tr><th>Equipamento</th><th>Responsável</th><th>Data de retirada</th><th>Previsão</th><th>Ação</th></tr></thead><tbody id="returnRows"></tbody></table></div>
+            <div class="empty-state" id="returnEmpty"><div class="empty-icon">↩</div><strong>Tudo em dia!</strong><p>Não há equipamentos aguardando devolução.</p></div>
+          </section>
+          <div style="height:16px"></div>
+          <section class="panel">
+            <div class="panel-header"><div><h2 class="panel-title">Devoluções registradas</h2><p class="panel-subtitle">Histórico dos itens que já retornaram.</p></div></div>
+            <div class="table-wrap"><table><thead><tr><th>Equipamento</th><th>Responsável</th><th>Devolvido em</th><th>Estado na devolução</th></tr></thead><tbody id="returnedRows"></tbody></table></div>
+            <div class="empty-state" id="returnedEmpty"><div class="empty-icon">✓</div><strong>Nenhuma devolução registrada</strong><p>As devoluções concluídas aparecerão aqui.</p></div>
+          </section>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <dialog id="equipmentDialog">
+    <form id="equipmentForm">
+      <div class="modal-header"><div><h2 id="equipmentDialogTitle">Cadastrar equipamento</h2><p>Preencha os dados para manter o acervo atualizado.</p></div><button class="modal-close" type="button" data-close="equipmentDialog" aria-label="Fechar">×</button></div>
+      <div class="modal-body"><div class="form-grid">
+        <input type="hidden" name="id">
+        <div class="field full"><label for="equipmentName">Nome do equipamento <span>*</span></label><input class="field-input" id="equipmentName" name="name" required maxlength="100" placeholder="Ex.: Projetor Epson"></div>
+        <div class="field"><label for="equipmentCode">Código / patrimônio</label><input class="field-input" id="equipmentCode" name="code" maxlength="40" placeholder="Ex.: EQ-001"></div>
+        <div class="field"><label for="equipmentCategory">Categoria</label><input class="field-input" id="equipmentCategory" name="category" maxlength="60" placeholder="Ex.: Audiovisual"></div>
+        <div class="field"><label for="equipmentCondition">Estado atual</label><select class="field-select" id="equipmentCondition" name="condition"><option value="good">Bom</option><option value="attention">Atenção</option><option value="damaged">Danificado</option><option value="maintenance">Em manutenção</option></select></div>
+        <div class="field full"><label for="equipmentNotes">Observações</label><textarea class="field-textarea" id="equipmentNotes" name="notes" maxlength="500" placeholder="Detalhes, acessórios ou observações sobre o item"></textarea></div>
+      </div></div>
+      <div class="modal-footer"><button class="button button-secondary" type="button" data-close="equipmentDialog">Cancelar</button><button class="button button-primary" type="submit">Salvar equipamento</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="loanDialog">
+    <form id="loanForm">
+      <div class="modal-header"><div><h2>Registrar empréstimo</h2><p>Informe o equipamento e quem ficará responsável.</p></div><button class="modal-close" type="button" data-close="loanDialog" aria-label="Fechar">×</button></div>
+      <div class="modal-body"><div class="form-grid">
+        <div class="field full"><label for="loanEquipment">Equipamento disponível <span>*</span></label><select class="field-select" id="loanEquipment" name="equipmentId" required></select></div>
+        <div class="field full"><label for="borrowerName">Nome do responsável <span>*</span></label><input class="field-input" id="borrowerName" name="borrower" required maxlength="100" placeholder="Nome completo"></div>
+        <div class="field"><label for="loanDate">Data da retirada <span>*</span></label><input class="field-input" id="loanDate" name="loanDate" type="date" required></div>
+        <div class="field"><label for="dueDate">Devolução prevista <span>*</span></label><input class="field-input" id="dueDate" name="dueDate" type="date" required></div>
+        <div class="field full"><label for="loanNotes">Observações</label><textarea class="field-textarea" id="loanNotes" name="notes" maxlength="500" placeholder="Finalidade, acessórios entregues ou outras informações"></textarea></div>
+      </div></div>
+      <div class="modal-footer"><button class="button button-secondary" type="button" data-close="loanDialog">Cancelar</button><button class="button button-primary" type="submit">Confirmar empréstimo</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="returnDialog">
+    <form id="returnForm">
+      <div class="modal-header"><div><h2>Registrar devolução</h2><p>Confira o item e informe o estado em que foi devolvido.</p></div><button class="modal-close" type="button" data-close="returnDialog" aria-label="Fechar">×</button></div>
+      <div class="modal-body"><div class="form-grid">
+        <input type="hidden" name="loanId">
+        <div class="field full"><label>Equipamento e responsável</label><div id="returnSummary" class="field-hint" style="padding:10px 12px;border:1px solid var(--line);border-radius:8px;color:#4c5870"></div></div>
+        <div class="field full"><label for="returnCondition">Estado do equipamento na devolução <span>*</span></label><select class="field-select" id="returnCondition" name="condition" required><option value="good">Bom — disponível para novo empréstimo</option><option value="attention">Atenção — disponível, requer acompanhamento</option><option value="damaged">Danificado — indisponível</option><option value="maintenance">Precisa de manutenção — indisponível</option></select></div>
+        <div class="field full"><label for="returnNotes">Observações da devolução</label><textarea class="field-textarea" id="returnNotes" name="notes" maxlength="500" placeholder="Descreva avarias, itens faltantes ou outras observações"></textarea></div>
+      </div></div>
+      <div class="modal-footer"><button class="button button-secondary" type="button" data-close="returnDialog">Cancelar</button><button class="button button-primary" type="submit">Confirmar devolução</button></div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script>
+    (() => {
+      "use strict";
+
+      const STORAGE_KEY = "equipar-data-v1";
+      const conditionNames = { good: "Bom", attention: "Atenção", damaged: "Danificado", maintenance: "Manutenção" };
+      const conditionTags = { good: "tag-good", attention: "tag-attention", damaged: "tag-damaged", maintenance: "tag-maintenance" };
+      const state = loadState();
+      const byId = (id) => document.getElementById(id);
+      const safe = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
+      const todayISO = () => {
+        const now = new Date();
+        return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+      };
+      const makeId = () => globalThis.crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+      function loadState() {
+        try {
+          const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"equipments":[],"loans":[]}');
+          if (!Array.isArray(parsed.equipments) || !Array.isArray(parsed.loans)) throw new Error("Formato de dados inválido.");
+          return parsed;
+        } catch (error) {
+          console.error("Não foi possível carregar os dados salvos:", error);
+          return { equipments: [], loans: [] };
+        }
+      }
+
+      function saveState() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch (error) {
+          console.error("Não foi possível salvar os dados:", error);
+          showToast("Não foi possível salvar. Verifique o espaço disponível no navegador.", true);
+          return false;
+        }
+        return true;
+      }
+
+      function showToast(message, isError = false) {
+        const toast = byId("toast");
+        toast.textContent = message;
+        toast.style.color = isError ? "var(--red)" : "var(--green)";
+        toast.style.borderColor = isError ? "#f2d4d4" : "#d5eee3";
+        toast.classList.add("show");
+        clearTimeout(showToast.timer);
+        showToast.timer = setTimeout(() => toast.classList.remove("show"), 3000);
+      }
+
+      function formatDate(value) {
+        if (!value) return "—";
+        const parts = value.split("-");
+        return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : value;
+      }
+
+      function activeLoanFor(equipmentId) {
+        return state.loans.find((loan) => loan.equipmentId === equipmentId && !loan.returnedAt);
+      }
+
+      function equipmentState(equipment) {
+        if (activeLoanFor(equipment.id)) return "loaned";
+        if (equipment.condition === "maintenance") return "maintenance";
+        if (equipment.condition === "damaged") return "damaged";
+        return "available";
+      }
+
+      function stateLabel(value) {
+        return ({ available: "Disponível", loaned: "Emprestado", maintenance: "Manutenção", damaged: "Danificado" })[value] || value;
+      }
+
+      function badge(label, className) {
+        return `<span class="tag ${className}">${safe(label)}</span>`;
+      }
+
+      function emptyToggle(elementId, show) {
+        byId(elementId).style.display = show ? "block" : "none";
+      }
+
+      function render() {
+        renderStats();
+        renderEquipment();
+        renderLoans();
+        renderReturns();
+        renderActivity();
+        renderRecent();
+      }
+
+      function renderStats() {
+        byId("stat-total").textContent = state.equipments.length;
+        byId("stat-available").textContent = state.equipments.filter((item) => equipmentState(item) === "available").length;
+        byId("stat-loaned").textContent = state.equipments.filter((item) => equipmentState(item) === "loaned").length;
+        byId("stat-maintenance").textContent = state.equipments.filter((item) => ["maintenance", "damaged"].includes(equipmentState(item))).length;
+      }
+
+      function renderEquipment() {
+        const query = byId("equipmentSearch").value.trim().toLocaleLowerCase("pt-BR");
+        const filter = byId("equipmentFilter").value;
+        const visible = state.equipments.filter((item) => {
+          const matches = [item.name, item.code, item.category].some((value) => String(value || "").toLocaleLowerCase("pt-BR").includes(query));
+          return matches && (filter === "all" || equipmentState(item) === filter);
+        });
+        byId("equipmentCount").textContent = `${state.equipments.length} ${state.equipments.length === 1 ? "equipamento cadastrado" : "equipamentos cadastrados"}`;
+        byId("equipmentRows").innerHTML = visible.map((item) => {
+          const currentState = equipmentState(item);
+          const statusClass = ({ available: "tag-available", loaned: "tag-loaned", maintenance: "tag-maintenance", damaged: "tag-damaged" })[currentState];
+          return `<tr>
+            <td><div class="item-name">${safe(item.name)}</div>${item.notes ? `<div class="item-meta">${safe(item.notes)}</div>` : ""}</td>
+            <td>${safe(item.code || "—")}</td><td>${safe(item.category || "—")}</td>
+            <td>${badge(conditionNames[item.condition] || "Bom", conditionTags[item.condition] || "tag-good")}</td>
+            <td>${badge(stateLabel(currentState), statusClass)}</td>
+            <td><div class="row-actions"><button class="text-button" data-edit-equipment="${safe(item.id)}">Editar</button><button class="text-button" data-delete-equipment="${safe(item.id)}">Excluir</button></div></td>
+          </tr>`;
+        }).join("");
+        emptyToggle("equipmentEmpty", visible.length === 0);
+      }
+
+      function renderLoans() {
+        const query = byId("loanSearch").value.trim().toLocaleLowerCase("pt-BR");
+        const filter = byId("loanFilter").value;
+        const sorted = [...state.loans].sort((a, b) => (b.loanDate || "").localeCompare(a.loanDate || ""));
+        const visible = sorted.filter((loan) => {
+          const equipment = state.equipments.find((item) => item.id === loan.equipmentId);
+          const text = `${equipment?.name || ""} ${equipment?.code || ""} ${loan.borrower || ""}`.toLocaleLowerCase("pt-BR");
+          return text.includes(query) && (filter === "all" || (filter === "active" ? !loan.returnedAt : Boolean(loan.returnedAt)));
+        });
+        byId("loanRows").innerHTML = visible.map((loan) => {
+          const equipment = state.equipments.find((item) => item.id === loan.equipmentId);
+          const overdue = !loan.returnedAt && loan.dueDate && loan.dueDate < todayISO();
+          const status = loan.returnedAt ? badge("Devolvido", "tag-returned") : overdue ? badge("Atrasado", "tag-overdue") : badge("Em andamento", "tag-loaned");
+          return `<tr><td><div class="item-name">${safe(equipment?.name || "Equipamento removido")}</div><div class="item-meta">${safe(equipment?.code || "")}</div></td>
+            <td>${safe(loan.borrower)}</td><td>${formatDate(loan.loanDate)}</td><td>${formatDate(loan.dueDate)}</td>
+            <td>${status}</td><td>${loan.returnedAt ? "—" : `<button class="text-button" data-return-loan="${safe(loan.id)}">Registrar devolução</button>`}</td></tr>`;
+        }).join("");
+        emptyToggle("loanEmpty", visible.length === 0);
+      }
+
+      function renderReturns() {
+        const active = state.loans.filter((loan) => !loan.returnedAt).sort((a, b) => (a.dueDate || "").localeCompare(b.dueDate || ""));
+        byId("returnRows").innerHTML = active.map((loan) => {
+          const equipment = state.equipments.find((item) => item.id === loan.equipmentId);
+          return `<tr><td><div class="item-name">${safe(equipment?.name || "Equipamento removido")}</div><div class="item-meta">${safe(equipment?.code || "")}</div></td>
+            <td>${safe(loan.borrower)}</td><td>${formatDate(loan.loanDate)}</td><td>${formatDate(loan.dueDate)}</td>
+            <td><button class="button button-primary button-small" data-return-loan="${safe(loan.id)}">↩ Devolver</button></td></tr>`;
+        }).join("");
+        emptyToggle("returnEmpty", active.length === 0);
+
+        const returned = state.loans.filter((loan) => loan.returnedAt).sort((a, b) => (b.returnedAt || "").localeCompare(a.returnedAt || "")).slice(0, 30);
+        byId("returnedRows").innerHTML = returned.map((loan) => {
+          const equipment = state.equipments.find((item) => item.id === loan.equipmentId);
+          const condition = loan.returnCondition || "good";
+          return `<tr><td><div class="item-name">${safe(equipment?.name || "Equipamento removido")}</div><div class="item-meta">${safe(equipment?.code || "")}</div></td>
+            <td>${safe(loan.borrower)}</td><td>${formatDate(loan.returnedAt)}</td>
+            <td>${badge(conditionNames[condition] || "Bom", conditionTags[condition] || "tag-good")}${loan.returnNotes ? `<div class="item-meta">${safe(loan.returnNotes)}</div>` : ""}</td></tr>`;
+        }).join("");
+        emptyToggle("returnedEmpty", returned.length === 0);
+      }
+
+      function renderRecent() {
+        const recent = [...state.loans].sort((a, b) => (b.loanDate || "").localeCompare(a.loanDate || "")).slice(0, 5);
+        byId("recentLoans").innerHTML = recent.map((loan) => {
+          const equipment = state.equipments.find((item) => item.id === loan.equipmentId);
+          const overdue = !loan.returnedAt && loan.dueDate && loan.dueDate < todayISO();
+          const status = loan.returnedAt ? badge("Devolvido", "tag-returned") : overdue ? badge("Atrasado", "tag-overdue") : badge("Em andamento", "tag-loaned");
+          return `<tr><td><div class="item-name">${safe(equipment?.name || "Equipamento removido")}</div><div class="item-meta">${safe(equipment?.code || "")}</div></td><td>${safe(loan.borrower)}</td><td>${formatDate(loan.dueDate)}</td><td>${status}</td></tr>`;
+        }).join("");
+        emptyToggle("recentEmpty", recent.length === 0);
+      }
+
+      function renderActivity() {
+        const events = [];
+        state.equipments.forEach((item) => events.push({ date: item.createdAt || "", icon: "＋", title: `${item.name} cadastrado`, detail: item.category || "Equipamento" }));
+        state.loans.forEach((loan) => {
+          const equipment = state.equipments.find((item) => item.id === loan.equipmentId);
+          events.push({ date: loan.loanDate || "", icon: "⇄", title: `${equipment?.name || "Equipamento"} emprestado`, detail: `Para ${loan.borrower}` });
+          if (loan.returnedAt) events.push({ date: loan.returnedAt, icon: "↩", title: `${equipment?.name || "Equipamento"} devolvido`, detail: `Estado: ${conditionNames[loan.returnCondition] || "Bom"}` });
+        });
+        events.sort((a, b) => b.date.localeCompare(a.date));
+        const recent = events.slice(0, 5);
+        byId("activityList").innerHTML = recent.map((event) => `<div class="activity-item"><div class="activity-mark">${event.icon}</div><div class="activity-copy"><strong>${safe(event.title)}</strong><span>${safe(event.detail)} · ${formatDate(event.date)}</span></div></div>`).join("");
+        emptyToggle("activityEmpty", recent.length === 0);
+      }
+
+      function setView(name) {
+        document.querySelectorAll(".view").forEach((view) => view.classList.toggle("active", view.id === `view-${name}`));
+        document.querySelectorAll(".nav-button").forEach((button) => button.classList.toggle("active", button.dataset.view === name));
+        const titles = { dashboard: "Visão geral", equipments: "Equipamentos", loans: "Empréstimos", returns: "Devoluções" };
+        byId("breadcrumbTitle").textContent = titles[name] || titles.dashboard;
+        byId("sidebar").classList.remove("open");
+      }
+
+      function openEquipmentForm(item) {
+        const form = byId("equipmentForm");
+        form.reset();
+        form.elements.id.value = item?.id || "";
+        form.elements.name.value = item?.name || "";
+        form.elements.code.value = item?.code || "";
+        form.elements.category.value = item?.category || "";
+        form.elements.condition.value = item?.condition || "good";
+        form.elements.notes.value = item?.notes || "";
+        byId("equipmentDialogTitle").textContent = item ? "Editar equipamento" : "Cadastrar equipamento";
+        byId("equipmentDialog").showModal();
+      }
+
+      function openLoanForm() {
+        const available = state.equipments.filter((item) => equipmentState(item) === "available");
+        if (available.length === 0) {
+          showToast("Não há equipamentos disponíveis para empréstimo.", true);
+          setView("equipments");
+          return;
+        }
+        const select = byId("loanEquipment");
+        select.innerHTML = available.map((item) => `<option value="${safe(item.id)}">${safe(item.name)}${item.code ? ` — ${safe(item.code)}` : ""}</option>`).join("");
+        byId("loanForm").reset();
+        byId("loanDate").value = todayISO();
+        const due = new Date(`${todayISO()}T12:00:00`);
+        due.setDate(due.getDate() + 7);
+        byId("dueDate").value = new Date(due.getTime() - due.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+        byId("dueDate").min = byId("loanDate").value;
+        byId("loanDialog").showModal();
+      }
+
+      function openReturnForm(loanId) {
+        const loan = state.loans.find((item) => item.id === loanId && !item.returnedAt);
+        if (!loan) return;
+        const equipment = state.equipments.find((item) => item.id === loan.equipmentId);
+        byId("returnForm").reset();
+        byId("returnForm").elements.loanId.value = loan.id;
+        byId("returnSummary").textContent = `${equipment?.name || "Equipamento removido"} · Responsável: ${loan.borrower} · Previsão: ${formatDate(loan.dueDate)}`;
+        byId("returnDialog").showModal();
+      }
+
+      document.querySelectorAll(".nav-button").forEach((button) => button.addEventListener("click", () => setView(button.dataset.view)));
+      document.querySelectorAll("[data-view-link]").forEach((button) => button.addEventListener("click", () => setView(button.dataset.viewLink)));
+      document.querySelectorAll("[data-action='new-equipment']").forEach((button) => button.addEventListener("click", () => openEquipmentForm()));
+      document.querySelectorAll("[data-action='new-loan']").forEach((button) => button.addEventListener("click", openLoanForm));
+      document.querySelectorAll("[data-close]").forEach((button) => button.addEventListener("click", () => byId(button.dataset.close).close()));
+      byId("mobileMenu").addEventListener("click", () => byId("sidebar").classList.toggle("open"));
+      byId("equipmentSearch").addEventListener("input", renderEquipment);
+      byId("equipmentFilter").addEventListener("change", renderEquipment);
+      byId("loanSearch").addEventListener("input", renderLoans);
+      byId("loanFilter").addEventListener("change", renderLoans);
+      byId("loanDate").addEventListener("change", () => {
+        byId("dueDate").min = byId("loanDate").value;
+        if (byId("dueDate").value < byId("loanDate").value) byId("dueDate").value = byId("loanDate").value;
+      });
+
+      byId("equipmentForm").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const data = new FormData(form);
+        const id = data.get("id");
+        const existing = state.equipments.find((item) => item.id === id);
+        const updated = {
+          id: id || makeId(),
+          name: String(data.get("name")).trim(),
+          code: String(data.get("code")).trim(),
+          category: String(data.get("category")).trim(),
+          condition: String(data.get("condition")),
+          notes: String(data.get("notes")).trim(),
+          createdAt: existing?.createdAt || todayISO()
+        };
+        if (!updated.name) return;
+        if (existing) Object.assign(existing, updated);
+        else state.equipments.push(updated);
+        if (saveState()) {
+          byId("equipmentDialog").close();
+          render();
+          showToast(existing ? "Equipamento atualizado com sucesso." : "Equipamento cadastrado com sucesso.");
+        }
+      });
+
+      byId("loanForm").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const data = new FormData(event.currentTarget);
+        const equipmentId = String(data.get("equipmentId"));
+        const equipment = state.equipments.find((item) => item.id === equipmentId);
+        const loanDate = String(data.get("loanDate"));
+        const dueDate = String(data.get("dueDate"));
+        if (!equipment || equipmentState(equipment) !== "available") {
+          showToast("Este equipamento não está mais disponível.", true);
+          byId("loanDialog").close();
+          render();
+          return;
+        }
+        if (!data.get("borrower") || !loanDate || !dueDate || dueDate < loanDate) {
+          showToast("Confira os dados e as datas do empréstimo.", true);
+          return;
+        }
+        state.loans.push({
+          id: makeId(),
+          equipmentId,
+          borrower: String(data.get("borrower")).trim(),
+          loanDate,
+          dueDate,
+          notes: String(data.get("notes")).trim(),
+          returnedAt: null,
+          createdAt: new Date().toISOString()
+        });
+        if (saveState()) {
+          byId("loanDialog").close();
+          render();
+          showToast("Empréstimo registrado com sucesso.");
+        }
+      });
+
+      byId("returnForm").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const data = new FormData(event.currentTarget);
+        const loan = state.loans.find((item) => item.id === data.get("loanId") && !item.returnedAt);
+        if (!loan) {
+          showToast("Este empréstimo já foi devolvido.", true);
+          byId("returnDialog").close();
+          render();
+          return;
+        }
+        loan.returnedAt = todayISO();
+        loan.returnCondition = String(data.get("condition"));
+        loan.returnNotes = String(data.get("notes")).trim();
+        const equipment = state.equipments.find((item) => item.id === loan.equipmentId);
+        if (equipment) equipment.condition = loan.returnCondition;
+        if (saveState()) {
+          byId("returnDialog").close();
+          render();
+          showToast("Devolução registrada e estado do equipamento atualizado.");
+        }
+      });
+
+      document.addEventListener("click", (event) => {
+        const editButton = event.target.closest("[data-edit-equipment]");
+        if (editButton) {
+          const equipment = state.equipments.find((item) => item.id === editButton.dataset.editEquipment);
+          if (equipment) openEquipmentForm(equipment);
+          return;
+        }
+        const deleteButton = event.target.closest("[data-delete-equipment]");
+        if (deleteButton) {
+          const equipment = state.equipments.find((item) => item.id === deleteButton.dataset.deleteEquipment);
+          if (!equipment) return;
+          if (activeLoanFor(equipment.id)) {
+            showToast("Não é possível excluir um equipamento emprestado.", true);
+            return;
+          }
+          if (state.loans.some((loan) => loan.equipmentId === equipment.id)) {
+            showToast("Não é possível excluir: este equipamento possui histórico de empréstimos.", true);
+            return;
+          }
+          if (!window.confirm(`Excluir "${equipment.name}" do acervo? O histórico de empréstimos será mantido.`)) return;
+          state.equipments = state.equipments.filter((item) => item.id !== equipment.id);
+          if (saveState()) {
+            render();
+            showToast("Equipamento excluído.");
+          }
+          return;
+        }
+        const returnButton = event.target.closest("[data-return-loan]");
+        if (returnButton) openReturnForm(returnButton.dataset.returnLoan);
+      });
+
+      byId("todayLabel").textContent = new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date());
+      render();
+    })();
+  </script>
+</body>
+</html>
